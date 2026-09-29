@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, ExternalLink, User, BookOpen, Hash, Lock, School, X, Copy, Check } from "lucide-react";
+import { Search, ExternalLink, User, BookOpen, Hash, Lock, School, X, Copy, Check, QrCode } from "lucide-react";
+import QRCodeCanvas from "qrcode";
 import { students, TEST_URL, type Student } from "./lib/studentData";
 import "./index.css";
 
@@ -152,8 +153,159 @@ function CredBadge({ icon, label, value }: { icon: React.ReactNode; label: strin
   );
 }
 
+/* ── QR Modal ── */
+function QRModal({ url, onClose }: { url: string; onClose: () => void }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    if (canvasRef.current) {
+      QRCodeCanvas.toCanvas(canvasRef.current, url, {
+        width: 280,
+        margin: 2,
+        color: { dark: "#1e1b4b", light: "#ffffff" },
+      });
+    }
+  }, [url]);
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        key="qr-overlay"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 1000,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "rgba(15,10,40,0.72)",
+          backdropFilter: "blur(10px)",
+          WebkitBackdropFilter: "blur(10px)",
+        }}
+      >
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0, y: 30 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.8, opacity: 0, y: 30 }}
+          transition={{ type: "spring", stiffness: 320, damping: 26 }}
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            background: "rgba(255,255,255,0.97)",
+            borderRadius: 24,
+            padding: "36px 40px 32px",
+            boxShadow: "0 40px 100px rgba(79,70,229,0.28), 0 8px 32px rgba(0,0,0,0.18)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 18,
+            maxWidth: 380,
+            width: "90vw",
+            position: "relative",
+          }}
+        >
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            style={{
+              position: "absolute",
+              top: 14,
+              right: 14,
+              background: "rgba(99,102,241,0.08)",
+              border: "1.5px solid rgba(99,102,241,0.18)",
+              borderRadius: 8,
+              cursor: "pointer",
+              padding: "5px 7px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#6366f1",
+              transition: "background 0.2s",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(99,102,241,0.18)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(99,102,241,0.08)")}
+          >
+            <X size={16} />
+          </button>
+
+          {/* Title */}
+          <div style={{ textAlign: "center" }}>
+            <div
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(124,58,237,0.15) 100%)",
+                border: "1.5px solid rgba(99,102,241,0.25)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 12px",
+              }}
+            >
+              <QrCode size={24} color="#6366f1" />
+            </div>
+            <h2
+              style={{
+                margin: 0,
+                fontSize: "1.1rem",
+                fontWeight: 800,
+                background: "linear-gradient(135deg, #4f46e5, #7c3aed)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                letterSpacing: "-0.02em",
+              }}
+            >
+              Scan to Open Test
+            </h2>
+            <p style={{ margin: "4px 0 0", color: "#94a3b8", fontSize: "0.75rem" }}>
+              Point your camera at the QR code
+            </p>
+          </div>
+
+          {/* QR Code */}
+          <div
+            style={{
+              padding: 14,
+              borderRadius: 16,
+              background: "#ffffff",
+              boxShadow: "0 4px 24px rgba(99,102,241,0.15), 0 0 0 1.5px rgba(99,102,241,0.12)",
+              display: "inline-flex",
+            }}
+          >
+            <canvas ref={canvasRef} style={{ borderRadius: 8, display: "block" }} />
+          </div>
+
+          {/* URL label */}
+          <p
+            style={{
+              margin: 0,
+              fontSize: "0.68rem",
+              color: "#64748b",
+              fontFamily: "monospace",
+              wordBreak: "break-all",
+              textAlign: "center",
+              background: "rgba(99,102,241,0.06)",
+              border: "1px solid rgba(99,102,241,0.12)",
+              borderRadius: 8,
+              padding: "6px 12px",
+            }}
+          >
+            {url}
+          </p>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 export default function App() {
   const [query, setQuery] = useState("");
+  const [showQR, setShowQR] = useState(false);
   // Debounced query: only triggers the filter after typing pauses (16ms = 1 frame)
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -247,6 +399,41 @@ export default function App() {
             {TEST_URL}
             <ExternalLink size={12} />
           </a>
+
+          {/* QR code button */}
+          <button
+            onClick={() => setShowQR(true)}
+            title="Show QR Code"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "4px 11px",
+              borderRadius: 6,
+              border: "1px solid rgba(99,102,241,0.22)",
+              background: "rgba(99,102,241,0.08)",
+              cursor: "pointer",
+              color: "#4f46e5",
+              fontSize: "0.72rem",
+              fontWeight: 700,
+              fontFamily: "Inter, sans-serif",
+              letterSpacing: "0.03em",
+              transition: "background 0.2s, border-color 0.2s, transform 0.15s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(99,102,241,0.16)";
+              e.currentTarget.style.borderColor = "rgba(99,102,241,0.4)";
+              e.currentTarget.style.transform = "scale(1.04)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(99,102,241,0.08)";
+              e.currentTarget.style.borderColor = "rgba(99,102,241,0.22)";
+              e.currentTarget.style.transform = "scale(1)";
+            }}
+          >
+            <QrCode size={13} />
+            QR Code
+          </button>
         </div>
 
         {/* ── Heading ── */}
@@ -482,6 +669,9 @@ export default function App() {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* QR Modal */}
+      {showQR && <QRModal url={TEST_URL} onClose={() => setShowQR(false)} />}
     </div>
   );
 }
