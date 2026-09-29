@@ -1,0 +1,139 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  background: #f0f4ff;
+  color: #1e293b;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.25);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.5);
+}
+
+::selection {
+  background: rgba(99, 102, 241, 0.2);
+  color: #1e293b;
+}
+
+*:focus-visible {
+  outline: 2px solid rgba(99, 102, 241, 0.6);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── 3D Cube Scene ── */
+.cube-scene {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  perspective: 900px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.cube-wrap {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  transform-style: preserve-3d;
+  animation: rotateCube 18s linear infinite;
+  opacity: 0.13;
+}
+
+.cube-face {
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  border: 2px solid rgba(99, 102, 241, 0.6);
+  background: rgba(99, 102, 241, 0.04);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cube-face::after {
+  content: '';
+  position: absolute;
+  inset: 12px;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 8px;
+}
+
+.face-front  { transform: translateZ(110px); }
+.face-back   { transform: rotateY(180deg) translateZ(110px); }
+.face-left   { transform: rotateY(-90deg) translateZ(110px); }
+.face-right  { transform: rotateY(90deg) translateZ(110px); }
+.face-top    { transform: rotateX(90deg) translateZ(110px); }
+.face-bottom { transform: rotateX(-90deg) translateZ(110px); }
+
+@keyframes rotateCube {
+  0%   { transform: rotateX(10deg) rotateY(0deg) rotateZ(5deg); }
+  100% { transform: rotateX(10deg) rotateY(360deg) rotateZ(5deg); }
+}
+
+/* small floating cubes */
+.mini-cube {
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  transform-style: preserve-3d;
+  animation: rotateCube linear infinite;
+  opacity: 0.07;
+}
+
+.mini-cube .cube-face {
+  border-radius: 6px;
+}
+
+/* mesh grid overlay */
+.mesh-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(99,102,241,0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99,102,241,0.07) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* ── Glassmorphism card ── */
+.glass-card {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 8px 32px rgba(99, 102, 241, 0.08),
+    0 2px 8px rgba(0,0,0,0.04),
+    inset 0 1px 0 rgba(255,255,255,0.95);
+}
