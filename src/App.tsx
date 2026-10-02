@@ -304,32 +304,6 @@ function QRModal({ url, onClose }: { url: string; onClose: () => void }) {
 }
 
 export default function App() {
-  const [query, setQuery] = useState("");
-  const [showQR, setShowQR] = useState(false);
-  // Debounced query: only triggers the filter after typing pauses (16ms = 1 frame)
-  const [debouncedQuery, setDebouncedQuery] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => setDebouncedQuery(query), 60);
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [query]);
-
-  const results = useMemo<Student[]>(() => {
-    const tokens = normalise(debouncedQuery).split(" ").filter((t) => t.length > 0);
-    if (tokens.length === 0 || tokens.every((t) => t.length < 2)) return [];
-    const out: Student[] = [];
-    for (let i = 0; i < normalisedNames.length; i++) {
-      if (matchesAll(normalisedNames[i], tokens)) {
-        out.push(students[i]);
-        if (out.length === 50) break;
-      }
-    }
-    return out;
-  }, [debouncedQuery]);
-
   return (
     <div
       style={{
@@ -346,332 +320,122 @@ export default function App() {
       {/* 3D background */}
       <CubeScene />
 
-      {/* Content layer */}
-      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-
-        {/* ── Top URL banner ── */}
-        <div
+      {/* Centered message */}
+      <div
+        style={{
+          position: "relative",
+          zIndex: 1,
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "24px",
+        }}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
           className="glass-card"
           style={{
-            flexShrink: 0,
-            borderLeft: "none",
-            borderRight: "none",
-            borderTop: "none",
-            borderRadius: 0,
+            maxWidth: 520,
+            width: "100%",
+            borderRadius: 20,
+            padding: "48px 40px",
+            textAlign: "center",
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
-            justifyContent: "center",
-            gap: 10,
-            padding: "9px 20px",
+            gap: 20,
           }}
         >
-          <span style={{ color: "#6366f1", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-            Test URL
-          </span>
-          <a
-            href={TEST_URL}
-            target="_blank"
-            rel="noopener noreferrer"
+          {/* Icon */}
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 280, damping: 20 }}
             style={{
-              color: "#4f46e5",
-              fontSize: "0.8rem",
-              fontFamily: "monospace",
-              fontWeight: 600,
-              textDecoration: "none",
+              width: 80,
+              height: 80,
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, rgba(239,68,68,0.12) 0%, rgba(220,38,38,0.18) 100%)",
+              border: "2px solid rgba(239,68,68,0.3)",
               display: "flex",
               alignItems: "center",
-              gap: 5,
-              padding: "2px 10px",
-              borderRadius: 5,
-              background: "rgba(99,102,241,0.08)",
-              border: "1px solid rgba(99,102,241,0.2)",
-              transition: "background 0.2s, border-color 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(99,102,241,0.15)";
-              e.currentTarget.style.borderColor = "rgba(99,102,241,0.4)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(99,102,241,0.08)";
-              e.currentTarget.style.borderColor = "rgba(99,102,241,0.2)";
+              justifyContent: "center",
             }}
           >
-            {TEST_URL}
-            <ExternalLink size={12} />
-          </a>
+            <Lock size={36} color="#ef4444" strokeWidth={1.8} />
+          </motion.div>
 
-          {/* QR code button */}
-          <button
-            onClick={() => setShowQR(true)}
-            title="Show QR Code"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 5,
-              padding: "4px 11px",
-              borderRadius: 6,
-              border: "1px solid rgba(99,102,241,0.22)",
-              background: "rgba(99,102,241,0.08)",
-              cursor: "pointer",
-              color: "#4f46e5",
-              fontSize: "0.72rem",
-              fontWeight: 700,
-              fontFamily: "Inter, sans-serif",
-              letterSpacing: "0.03em",
-              transition: "background 0.2s, border-color 0.2s, transform 0.15s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(99,102,241,0.16)";
-              e.currentTarget.style.borderColor = "rgba(99,102,241,0.4)";
-              e.currentTarget.style.transform = "scale(1.04)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(99,102,241,0.08)";
-              e.currentTarget.style.borderColor = "rgba(99,102,241,0.22)";
-              e.currentTarget.style.transform = "scale(1)";
-            }}
-          >
-            <QrCode size={13} />
-            QR Code
-          </button>
-        </div>
-
-        {/* ── Heading ── */}
-        <div style={{ flexShrink: 0, textAlign: "center", padding: "18px 24px 10px" }}>
+          {/* Heading */}
           <motion.h1
-            initial={{ opacity: 0, y: -16 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
+            transition={{ delay: 0.35, duration: 0.5 }}
             style={{
               margin: 0,
-              fontSize: "1.45rem",
+              fontSize: "1.5rem",
               fontWeight: 800,
               letterSpacing: "-0.03em",
-              background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #6366f1 100%)",
+              background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               backgroundClip: "text",
+              lineHeight: 1.3,
             }}
           >
-            🔍 Find Your Login Credentials
+            Record Removed
           </motion.h1>
+
+          {/* Message */}
           <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            style={{ margin: "5px 0 0", color: "#94a3b8", fontSize: "0.78rem" }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+            style={{
+              margin: 0,
+              fontSize: "1.05rem",
+              color: "#475569",
+              fontWeight: 500,
+              lineHeight: 1.7,
+            }}
           >
-            Type your name below — your ID and password will appear instantly
+            The Record is removed now you cannot access the record now
           </motion.p>
-        </div>
 
-        {/* ── Search box ── */}
-        <div style={{ flexShrink: 0, padding: "8px 32px 10px", maxWidth: 640, margin: "0 auto", width: "100%" }}>
-          <div className="glass-card" style={{ position: "relative", borderRadius: 12 }}>
-            <Search
-              size={16}
-              style={{
-                position: "absolute",
-                left: 14,
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "#6366f1",
-                pointerEvents: "none",
-              }}
-            />
-            <input
-              ref={inputRef}
-              id="student-search-input"
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="اكتب اسمك / Type your name…"
-              dir="auto"
-              style={{
-                width: "100%",
-                boxSizing: "border-box",
-                padding: "12px 40px 12px 42px",
-                borderRadius: 12,
-                border: "none",
-                background: "transparent",
-                color: "#1e293b",
-                fontSize: "1rem",
-                outline: "none",
-                caretColor: "#6366f1",
-                fontFamily: "Inter, sans-serif",
-              }}
-            />
-            {query && (
-              <button
-                onClick={() => { setQuery(""); inputRef.current?.focus(); }}
-                style={{
-                  position: "absolute",
-                  right: 12,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  background: "rgba(99,102,241,0.1)",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: 4,
-                  borderRadius: 4,
-                  color: "#6366f1",
-                  display: "flex",
-                  transition: "background 0.15s",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(99,102,241,0.2)")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(99,102,241,0.1)")}
-              >
-                <X size={14} />
-              </button>
-            )}
-          </div>
+          {/* Divider */}
+          <motion.div
+            initial={{ opacity: 0, scaleX: 0 }}
+            animate={{ opacity: 1, scaleX: 1 }}
+            transition={{ delay: 0.7, duration: 0.4 }}
+            style={{
+              width: "60%",
+              height: 1,
+              background: "linear-gradient(90deg, transparent, rgba(99,102,241,0.3), transparent)",
+            }}
+          />
 
-          <AnimatePresence>
-            {query.length >= 2 && (
-              <motion.p
-                key="count"
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                style={{ margin: "6px 4px 0", color: "#94a3b8", fontSize: "0.72rem" }}
-              >
-                {results.length === 0
-                  ? "No students found — try a different spelling"
-                  : `${results.length} student${results.length > 1 ? "s" : ""} found${results.length === 50 ? " (showing first 50)" : ""}`}
-              </motion.p>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* ── Results list ── */}
-        <div
-          style={{
-            flex: 1,
-            overflowY: "auto",
-            padding: "4px 32px 20px",
-            maxWidth: 860,
-            width: "100%",
-            margin: "0 auto",
-            boxSizing: "border-box",
-          }}
-        >
-          {query.length < 2 && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4 }}
-              style={{
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 14,
-                paddingBottom: 40,
-              }}
-            >
-              <div
-                style={{
-                  width: 72,
-                  height: 72,
-                  borderRadius: "50%",
-                  background: "rgba(99,102,241,0.08)",
-                  border: "1.5px solid rgba(99,102,241,0.18)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <User size={32} strokeWidth={1.5} color="#6366f1" />
-              </div>
-              <span style={{ fontSize: "0.88rem", color: "#94a3b8", fontWeight: 500 }}>
-                Start typing to search among{" "}
-                <strong style={{ color: "#6366f1" }}>{students.length.toLocaleString()}</strong>{" "}
-                students
-              </span>
-            </motion.div>
-          )}
-
-          <AnimatePresence>
-            {results.map((s, idx) => (
-              <motion.div
-                key={s.id + idx}
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.22, delay: idx * 0.025 }}
-                className="glass-card"
-                style={{
-                  marginBottom: 10,
-                  padding: "14px 18px",
-                  borderRadius: 14,
-                  display: "grid",
-                  gridTemplateColumns: "1fr auto",
-                  gap: 12,
-                  alignItems: "center",
-                  cursor: "default",
-                  transition: "box-shadow 0.2s, transform 0.15s",
-                }}
-                onMouseEnter={(e) => {
-                  const el = e.currentTarget as HTMLDivElement;
-                  el.style.boxShadow = "0 12px 36px rgba(99,102,241,0.14), 0 2px 8px rgba(0,0,0,0.05)";
-                  el.style.transform = "translateY(-1px)";
-                }}
-                onMouseLeave={(e) => {
-                  const el = e.currentTarget as HTMLDivElement;
-                  el.style.boxShadow = "";
-                  el.style.transform = "";
-                }}
-              >
-                {/* Left: name + meta */}
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 7 }}>
-                    <div
-                      style={{
-                        width: 26,
-                        height: 26,
-                        borderRadius: "50%",
-                        background: "rgba(99,102,241,0.1)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <User size={13} color="#6366f1" />
-                    </div>
-                    <span dir="auto" style={{ fontWeight: 700, color: "#1e293b", fontSize: "0.95rem" }}>
-                      {s.name}
-                    </span>
-                  </div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                    <InfoChip icon={<School size={11} />} label="School" value={s.className} />
-                    <InfoChip icon={<BookOpen size={11} />} label="Grade" value={`Grade ${s.grade}`} />
-                    <InfoChip icon={<BookOpen size={11} />} label="Level" value={levelShort(s.level)} />
-                  </div>
-                </div>
-
-                {/* Right: credentials */}
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 6,
-                    alignItems: "flex-end",
-                    flexShrink: 0,
-                  }}
-                >
-                  <CredBadge icon={<Hash size={11} />} label="ID" value={s.id} />
-                  <CredBadge icon={<Lock size={11} />} label="PW" value={s.pw} />
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+          {/* Contact line */}
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8, duration: 0.5 }}
+            style={{
+              margin: 0,
+              fontSize: "0.95rem",
+              fontWeight: 700,
+              background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #7c3aed 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              letterSpacing: "0.01em",
+            }}
+          >
+            Contact MR Sabir Ali
+          </motion.p>
+        </motion.div>
       </div>
-
-      {/* QR Modal */}
-      {showQR && <QRModal url={TEST_URL} onClose={() => setShowQR(false)} />}
     </div>
   );
 }
